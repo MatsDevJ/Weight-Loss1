@@ -1,103 +1,61 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { Routes, Route } from 'react-router-dom';
+import theme from './theme/theme';
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// --- Page Components ---
+import SignUp from './pages/SignUp';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Meal from './pages/Meal';
-import SignUp from './pages/SignUp';
-import Login from './pages/Login';
-import useUserStore from './store/userStore';
-import ErrorBoundary from './components/ErrorBoundary';
-import { shallow } from 'zustand/shallow';
-
-// These components are now defined outside of the App component
-// to prevent them from being recreated on every render.
-const ProtectedRoute = ({ currentUser, children }) => {
-  if (!currentUser) {
-    return <Navigate to="/login" />;
-  }
-  return children;
-};
-
-const PublicRoute = ({ currentUser, children }) => {
-  if (currentUser) {
-    return <Navigate to="/" />;
-  }
-  return children;
-};
 
 function App() {
-  // Use shallow comparison to prevent infinite loops by only re-rendering
-  // when the top-level properties of the returned object change.
-  const { currentUser, _hasHydrated } = useUserStore(
-    (state) => ({
-      currentUser: state.currentUser,
-      _hasHydrated: state._hasHydrated,
-    }),
-    shallow
-  );
-
-  // This loading indicator is crucial for preventing race conditions on page load.
-  if (!_hasHydrated) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
-    <ErrorBoundary>
-      <Box>
-        {currentUser && <Navbar />}
-        <Box p={currentUser ? 3 : 0}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Navbar /> 
+      <main style={{ padding: '20px' }}>
+        <ErrorBoundary>
           <Routes>
-            <Route
-              path="/"
+            {/* Public Routes */}
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
+
+            {/* Protected Routes */}
+            <Route 
+              path="/" 
               element={
-                <ProtectedRoute currentUser={currentUser}>
+                <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
-              }
+              } 
             />
-            <Route
-              path="/profile"
+            <Route 
+              path="/profile" 
               element={
-                <ProtectedRoute currentUser={currentUser}>
+                <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
-              }
+              } 
             />
-            <Route
-              path="/meal"
+            <Route 
+              path="/meal" 
               element={
-                <ProtectedRoute currentUser={currentUser}>
+                <ProtectedRoute>
                   <Meal />
                 </ProtectedRoute>
-              }
+              } 
             />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute currentUser={currentUser}>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/signup"
-              element={
-                <PublicRoute currentUser={currentUser}>
-                  <SignUp />
-                </PublicRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" />} />
+
           </Routes>
-        </Box>
-      </Box>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </main>
+    </ThemeProvider>
   );
 }
 

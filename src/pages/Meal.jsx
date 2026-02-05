@@ -1,55 +1,67 @@
-import React, { useMemo } from 'react';
-import { Box, Typography, Card, CardContent, List, ListItem, ListItemText } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, TextField, Button, Typography, Container, Paper } from '@mui/material';
 import useUserStore from '../store/userStore';
-import MealInputForm from '../components/MealInputForm';
 
 const Meal = () => {
-  // Select the raw mealLog. Zustand will efficiently update this component only when mealLog changes.
-  const mealLog = useUserStore((state) => state.currentUser?.mealLog || []);
+  const addMealLog = useUserStore((state) => state.addMealLog);
+  const [mealName, setMealName] = useState('');
+  const [calories, setCalories] = useState('');
+  const [error, setError] = useState('');
 
-  // useMemo will cache the filtered list. The filter logic will only re-run if the mealLog array changes.
-  const dailyMeals = useMemo(() => {
-    const today = new Date();
-    return mealLog.filter(meal => {
-      if (!meal || !meal.date) return false; // Defensive check for valid meal entries
-      const mealDate = new Date(meal.date);
-      return mealDate.getFullYear() === today.getFullYear() &&
-             mealDate.getMonth() === today.getMonth() &&
-             mealDate.getDate() === today.getDate();
-    });
-  }, [mealLog]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!mealName || !calories) {
+      setError('Meal name and calories are required');
+      return;
+    }
+    addMealLog({ name: mealName, calories: parseInt(calories) });
+    setMealName('');
+    setCalories('');
+    setError('');
+    // Optionally, navigate to the dashboard or show a success message
+  };
 
   return (
-    <Box>
-      <Typography variant="h1" gutterBottom>
-        Log Your Meal
-      </Typography>
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <MealInputForm />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <Typography variant="h2" gutterBottom>Today's Meals</Typography>
-          <List>
-            {dailyMeals.length > 0 ? (
-              dailyMeals.map((meal, index) => (
-                <ListItem key={index}>
-                  <ListItemText 
-                    primary={`${meal.description} - ${meal.calories} calories`}
-                    secondary={new Date(meal.date).toLocaleTimeString()}
-                  />
-                </ListItem>
-              ))
-            ) : (
-              <Typography>No meals logged yet today.</Typography>
-            )}
-          </List>
-        </CardContent>
-      </Card>
-    </Box>
+    <Container component="main" maxWidth="xs">
+      <Paper elevation={3} sx={{ mt: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Typography component="h1" variant="h5">
+          Log a Meal
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            label="Meal Name"
+            autoFocus
+            value={mealName}
+            onChange={(e) => setMealName(e.target.value)}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            label="Calories"
+            type="number"
+            value={calories}
+            onChange={(e) => setCalories(e.target.value)}
+          />
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+          >
+            Add Meal
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

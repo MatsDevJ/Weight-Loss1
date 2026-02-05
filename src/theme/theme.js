@@ -1,34 +1,48 @@
 import { createTheme } from '@mui/material/styles';
+import { deepPurple, amber } from '@mui/material/colors';
 
+// Create a theme instance.
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#03a9f4', // light blue
+      main: deepPurple[500],
     },
     secondary: {
-      main: '#4caf50', // green
-    },
-    error: {
-        main: '#f44336', // red
-    },
-    warning: {
-        main: '#ff9800' // light orange
+      main: amber[500],
     },
     background: {
-      default: '#f4f6f8',
-      paper: '#ffffff',
+      default: '#f4f5f7', // A light grey for the main background
+      paper: '#ffffff',     // White for cards and surfaces
     },
   },
   typography: {
-    fontFamily: 'Roboto, Arial, sans-serif',
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
+      fontWeight: 700,
       fontSize: '2.5rem',
-      fontWeight: 500,
     },
     h2: {
-      fontSize: '2rem',
-      fontWeight: 500,
+        fontWeight: 700,
+        fontSize: '2rem',
+      },
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          boxShadow: '0px 10px 20px rgba(0,0,0,0.08)', // Softer, deeper shadow
+        },
+      },
     },
+    MuiButton: {
+        styleOverrides: {
+            root: {
+                borderRadius: 8,
+                textTransform: 'none', // More modern button text
+            }
+        }
+    }
   },
 });
 

@@ -6,7 +6,7 @@ const useUserStore = create(
     (set, get) => ({
       users: [],
       currentUser: null,
-      _hasHydrated: false, // Flag to indicate if rehydration is complete
+      _hasHydrated: false,
 
       setHasHydrated: (hydrated) => {
         set({ _hasHydrated: hydrated });
@@ -30,17 +30,7 @@ const useUserStore = create(
         const { users } = get();
         const user = users.find((u) => u.email === email);
         if (user) {
-          // Ensure nested objects are properly initialized
-          const updatedUser = {
-            ...user,
-            weightLog: user.weightLog || [],
-            mealLog: user.mealLog || [],
-          };
-          set({
-            currentUser: updatedUser,
-            // Also update the user in the main users list
-            users: users.map((u) => (u.email === email ? updatedUser : u)),
-          });
+          set({ currentUser: user });
           return true;
         }
         return false;
@@ -51,11 +41,22 @@ const useUserStore = create(
       updateProfile: (updatedProfile) =>
         set((state) => {
           if (!state.currentUser) return {};
-          const updatedUser = { ...state.currentUser, ...updatedProfile };
+
+          // **THE CRITICAL FIX**: Defensive update logic.
+          // Create a new object for the user profile data, but explicitly
+          // preserve the original, stable references for the log arrays.
+          const newCurrentUserData = {
+            ...state.currentUser,
+            ...updatedProfile, // Apply incoming changes
+            // Ensure log references are NOT replaced by accident.
+            weightLog: state.currentUser.weightLog,
+            mealLog: state.currentUser.mealLog,
+          };
+
           return {
-            currentUser: updatedUser,
+            currentUser: newCurrentUserData,
             users: state.users.map((user) =>
-              user.email === state.currentUser.email ? updatedUser : user
+              user.email === state.currentUser.email ? newCurrentUserData : user
             ),
           };
         }),
@@ -65,7 +66,7 @@ const useUserStore = create(
           if (!state.currentUser) return {};
           const updatedUser = {
             ...state.currentUser,
-            weightLog: [...(state.currentUser.weightLog || []), { ...newLog, date: new Date() }],
+            weightLog: [...state.currentUser.weightLog, { ...newLog, date: new Date().toISOString() }],
           };
           return {
             currentUser: updatedUser,
@@ -80,7 +81,7 @@ const useUserStore = create(
           if (!state.currentUser) return {};
           const updatedUser = {
             ...state.currentUser,
-            mealLog: [...(state.currentUser.mealLog || []), { ...newMeal, date: new Date() }],
+            mealLog: [...state.currentUser.mealLog, { ...newMeal, date: new Date().toISOString() }],
           };
           return {
             currentUser: updatedUser,
@@ -92,14 +93,13 @@ const useUserStore = create(
     }),
     {
       name: 'user-storage', // unique name for localStorage key
-      // This is the crucial part for fixing the race condition
-      partialize: (state) =>
-        Object.fromEntries(
-          Object.entries(state).filter(([key]) => !['_hasHydrated', 'setHasHydrated'].includes(key))
-        ),
       onRehydrateStorage: () => (state) => {
         state.setHasHydrated(true);
       },
+      partialize: (state) =>
+      Object.fromEntries(
+        Object.entries(state).filter(([key]) => !['_hasHydrated'].includes(key))
+      ),
     }
   )
 );

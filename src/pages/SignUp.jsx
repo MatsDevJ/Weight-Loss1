@@ -1,49 +1,39 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, TextField, Typography, Container, Box } from '@mui/material';
+import { Box, TextField, Button, Typography, Container, Paper } from '@mui/material';
 import useUserStore from '../store/userStore';
 
 const SignUp = () => {
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const navigate = useNavigate();
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const signup = useUserStore((state) => state.signup);
+  const users = useUserStore((state) => state.users);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    signup({ name, email });
+    if (!email || !password) {
+      setError('Email and password are required');
+      return;
+    }
+    const userExists = users.some(user => user.email === email);
+    if (userExists) {
+      setError('User with this email already exists');
+      return;
+    }
+    signup({ email, password });
     navigate('/login');
   };
 
   return (
     <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+      <Paper elevation={3} sx={{ mt: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography component="h1" variant="h5">
           Sign Up
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="name"
-            label="Name"
-            name="name"
-            autoComplete="name"
-            autoFocus
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            variant="outlined"
             margin="normal"
             required
             fullWidth
@@ -51,9 +41,27 @@ const SignUp = () => {
             label="Email Address"
             name="email"
             autoComplete="email"
+            autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
           <Button
             type="submit"
             fullWidth
@@ -63,7 +71,7 @@ const SignUp = () => {
             Sign Up
           </Button>
         </Box>
-      </Box>
+      </Paper>
     </Container>
   );
 };

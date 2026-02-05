@@ -1,38 +1,37 @@
 import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Button, TextField, Typography, Container, Box, Link } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, TextField, Button, Typography, Container, Paper } from '@mui/material';
 import useUserStore from '../store/userStore';
 
 const Login = () => {
   const [email, setEmail] = useState('');
-  const navigate = useNavigate();
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const login = useUserStore((state) => state.login);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (login(email)) {
+    if (!email || !password) {
+      setError('Email and password are required');
+      return;
+    }
+    const success = login(email);
+    if (success) {
       navigate('/');
     } else {
-      alert('Invalid credentials');
+      setError('Invalid email or password');
     }
   };
 
   return (
-    <Container maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+    <Container component="main" maxWidth="xs">
+      <Paper elevation={3} sx={{ mt: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography component="h1" variant="h5">
-          Log In
+          Login
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
-            variant="outlined"
             margin="normal"
             required
             fullWidth
@@ -44,19 +43,33 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
           >
-            Log In
+            Login
           </Button>
-		      <Link component={RouterLink} to="/signup" variant="body2">
-					{"Don't have an account? Sign Up"}
-			  </Link>
         </Box>
-      </Box>
+      </Paper>
     </Container>
   );
 };

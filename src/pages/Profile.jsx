@@ -1,73 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, TextField, Button, List, ListItem, ListItemText, FormControl, InputLabel, Select, MenuItem, Snackbar, Alert } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, TextField, Button, Typography, Container, Paper, Grid } from '@mui/material';
 import useUserStore from '../store/userStore';
-import { shallow } from 'zustand/shallow';
 
-const Profile = ({ isModal, onSave }) => {
-  const { currentUser, updateUser, addWeightLog } = useUserStore(
-    (state) => ({
-      currentUser: state.currentUser,
-      updateUser: state.updateUser,
-      addWeightLog: state.addWeightLog,
-    }),
-    shallow
-  );
+const Profile = () => {
+  const currentUser = useUserStore((state) => state.currentUser);
+  const updateProfile = useUserStore((state) => state.updateProfile);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    height: currentUser?.height || '',
+    goalWeight: currentUser?.goalWeight || '',
+    gender: currentUser?.gender || '',
+    age: currentUser?.age || '',
+  });
 
-  const [formState, setFormState] = useState(currentUser);
-  const [newWeight, setNewWeight] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
-  useEffect(() => {
-    setFormState(currentUser);
-  }, [currentUser]);
+  const handleEdit = () => {
+    setFormData({ // Pre-fill form data when editing starts
+        height: currentUser.height || '',
+        goalWeight: currentUser.goalWeight || '',
+        gender: currentUser.gender || '',
+        age: currentUser.age || '',
+    });
+    setIsEditing(true);
+  };
 
   const handleChange = (e) => {
-    setFormState({
-      ...formState,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    if (formState.name && formState.age && formState.gender && formState.height && formState.goalWeight && (!isModal || newWeight)) {
-        updateUser(formState);
-        if(isModal && newWeight) {
-            addWeightLog({ weight: parseFloat(newWeight) });
-        }
-        setSnackbarMessage('Profile saved successfully!');
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
-        if (isModal) {
-            onSave();
-        }
-    } else {
-        setSnackbarMessage('Please fill out all fields.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-    }
-  };
-
-  const handleAddWeight = () => {
-    if (newWeight) {
-      addWeightLog({ weight: parseFloat(newWeight) });
-      setNewWeight('');
-      setSnackbarMessage('Weight logged successfully!');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-    } else {
-      setSnackbarMessage('Please enter a weight.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
-  };
-
-  const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    setSnackbarOpen(false);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    updateProfile(formData);
+    setIsEditing(false);
   };
 
   if (!currentUser) {
@@ -75,133 +38,75 @@ const Profile = ({ isModal, onSave }) => {
   }
 
   return (
-    <Box>
-        {!isModal && (
-            <Typography variant="h1" gutterBottom>
-                Profile
-            </Typography>
-        )}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h2" gutterBottom>Edit Profile</Typography>
-          <Box component="form" noValidate autoComplete="off">
-            <TextField
-              fullWidth
-              required
-              label="Name"
-              name="name"
-              value={formState.name || ''}
-              onChange={handleChange}
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              required
-              label="Age"
-              name="age"
-              type="number"
-              value={formState.age || ''}
-              onChange={handleChange}
-              margin="normal"
-            />
-            <FormControl fullWidth required margin="normal">
-              <InputLabel>Gender</InputLabel>
-              <Select
-                name="gender"
-                value={formState.gender || ''}
-                onChange={handleChange}
-                label="Gender"
-              >
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              required
-              label="Height (cm)"
-              name="height"
-              type="number"
-              value={formState.height || ''}
-              onChange={handleChange}
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              required
-              label="Goal Weight (kg)"
-              name="goalWeight"
-              type="number"
-              value={formState.goalWeight || ''}
-              onChange={handleChange}
-              margin="normal"
-            />
-            {isModal && (
+    <Container component="main" maxWidth="md">
+      <Paper sx={{ mt: 8, p: 4 }}>
+        <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+          Profile
+        </Typography>
+        {isEditing ? (
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
                 <TextField
-                    fullWidth
-                    required
-                    label="Current Weight (kg)"
-                    name="newWeight"
-                    type="number"
-                    value={newWeight}
-                    onChange={(e) => setNewWeight(e.target.value)}
-                    margin="normal"
+                  fullWidth
+                  label="Height (cm)"
+                  name="height"
+                  value={formData.height}
+                  onChange={handleChange}
                 />
-            )}
-            <Button variant="contained" color="primary" onClick={handleSave} sx={{ mt: 2 }}>
-              Save Profile
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Goal Weight (kg)"
+                  name="goalWeight"
+                  value={formData.goalWeight}
+                  onChange={handleChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Age"
+                  name="age"
+                  type="number"
+                  value={formData.age}
+                  onChange={handleChange}
+                />
+              </Grid>
+            </Grid>
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button onClick={() => setIsEditing(false)} sx={{ mr: 1 }}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained">
+                Save
+              </Button>
+            </Box>
+          </Box>
+        ) : (
+          <Box>
+            <Typography><strong>Email:</strong> {currentUser.email}</Typography>
+            <Typography><strong>Height:</strong> {currentUser.height || 'Not set'}</Typography>
+            <Typography><strong>Goal Weight:</strong> {currentUser.goalWeight || 'Not set'}</Typography>
+            <Typography><strong>Gender:</strong> {currentUser.gender || 'Not set'}</Typography>
+            <Typography><strong>Age:</strong> {currentUser.age || 'Not set'}</Typography>
+            <Button onClick={handleEdit} variant="contained" sx={{ mt: 3 }}>
+              Edit Profile
             </Button>
           </Box>
-        </CardContent>
-      </Card>
-
-        {!isModal && (
-            <>
-                <Card sx={{ mb: 3 }}>
-                    <CardContent>
-                    <Typography variant="h2" gutterBottom>Log New Weight</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <TextField
-                        label="Current Weight (kg)"
-                        name="newWeight"
-                        type="number"
-                        value={newWeight}
-                        onChange={(e) => setNewWeight(e.target.value)}
-                        margin="normal"
-                        sx={{ mr: 2 }}
-                        />
-                        <Button variant="contained" color="primary" onClick={handleAddWeight}>
-                        Log Weight
-                        </Button>
-                    </Box>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent>
-                    <Typography variant="h2" gutterBottom>Weight History</Typography>
-                    <List>
-                        {currentUser.weightLog && currentUser.weightLog.length > 0 ? (
-                        currentUser.weightLog.map((entry, index) => (
-                            <ListItem key={index}>
-                            <ListItemText primary={`${entry.weight} kg`} secondary={new Date(entry.date).toLocaleString()} />
-                            </ListItem>
-                        ))
-                        ) : (
-                        <Typography>No weight history yet.</Typography>
-                        )}
-                    </List>
-                    </CardContent>
-                </Card>
-            </>
         )}
-
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+      </Paper>
+    </Container>
   );
 };
 
