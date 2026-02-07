@@ -7,8 +7,17 @@ const ProtectedRoute = ({ children }) => {
   const _hasHydrated = useUserStore((state) => state._hasHydrated);
 
   if (!_hasHydrated) {
-    return null; // Or a loading spinner
-  }
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        flexDirection: 'column'
+      }}>
+        <div>Loading...</div>
+      </div>
+    );  }
 
   return currentUser ? children : <Navigate to="/login" />;
 };
